@@ -8,7 +8,7 @@ import numpy as np
 class EEGDataset(Dataset):
     """EEG dataset"""
 
-    def __init__(self, root_dir, numNights, transform=None):
+    def __init__(self, root_dir, numNights, sectionLength, transform=None):
         """
         Args:
             root_dir (string): Directory with EEG data
@@ -16,58 +16,72 @@ class EEGDataset(Dataset):
         """
 
         #Load in the number of nights
-        clean_data_dir = '//uni.au.dk/dfs/Tech_EarEEG/Students/RD2022_Artefact_AkselStark/data/1A/study_1A_mat_simple_cleaned'
-        raw_data_dir = '//uni.au.dk/dfs/Tech_EarEEG/Students/RD2022_Artefact_AkselStark/data/1A/study_1A_mat_simple'
-
         nightsLoaded = 0
-        data = []
-        labels = []
+        labelsLoaded = 0
         
         #Run through all the cleaned EEG files
-        for subdir, dirs, files in os.walk(raw_data_dir):
+        for subdir, dirs, files in os.walk(root_dir):
             for file in files:
                 
                 if "EEG_raw_250hz" in file: #First, load in the downsampled EEG data
                     print(os.path.join(subdir, file))
-                    data.append(np.load(os.path.join(subdir, file)))
+
+                    if nightsLoaded == 0: # If first night, save array in data, otherwise, append it to data
+                        data = np.load(os.path.join(subdir, file))
+                    else:
+                        data = np.hstack((data,np.load(os.path.join(subdir, file))))
+
                     print(f'Night {nightsLoaded} data loaded')
+                    nightsLoaded += 1
 
                 if 'artefact_annotation' in file:    #Load in the annotation
                     print(os.path.join(subdir, file))
-                    labels.append(np.load(os.path.join(subdir, file)))
-                    
-                    nightsLoaded += 1
-                    print(f'Night {nightsLoaded} data loaded')
+                    if labelsLoaded == 0:
+                        labels = np.load(os.path.join(subdir, file))
+                    else:
+                        np.hstack((labels,np.load(os.path.join(subdir, file))))
 
-            if nightsLoaded == numNights: # When the correct number of nights have
+                    print(f'Lables for night {labelsLoaded} loaded')
+                    labelsLoaded += 1
+                    
+
+            if nightsLoaded == numNights and labelsLoaded == numNights : # When the correct number of nights has been loaded
                 break
 
         
         self.data = data
         self.labels = labels
+        self.sectionLength = sectionLength
 
 
     def __len__(self):
-        len = 0
+        samples = 0
+        
+        samples = self.data.shape[0]*self.data.shape[1]
 
-        for night in self.data:
-            
-
-        return len
+        return samples/self.sectionLength
 
     def __getitem__(self, idx):
         if torch.is_tensor(idx):
             idx = idx.tolist()
 
-        img_name = os.path.join(self.root_dir,
-                                self.landmarks_frame.iloc[idx, 0])
-        image = io.imread(img_name)
-        landmarks = self.landmarks_frame.iloc[idx, 1:]
-        landmarks = np.array([landmarks])
-        landmarks = landmarks.astype('float').reshape(-1, 2)
-        sample = {'image': image, 'landmarks': landmarks}
+        
 
-        if self.transform:
-            sample = self.transform(sample)
+        for sample in idx:
+            index = sample * self.sectionLength
+            channel = np.floor(index/self.data.shape[1])
+            start = index % self.data.shape[1]
+            data = self.data[channel, start : start + self.sectionLength]
+            artefacts = self.labels[channel, start : start + self.sectionLength]
+        
+            sample = {'data': data, 'artefacts': artefacts}
 
         return sample
+
+
+
+raw_data_dir = '//uni.au.dk/dfs/Tech_EarEEG/Students/RD2022_Artefact_AkselStark/data/1A/study_1A_mat_simple'
+
+ds1 = EEGDataset(raw_data_dir,2, 250)
+
+print('debug')
