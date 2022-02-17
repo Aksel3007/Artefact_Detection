@@ -27,7 +27,7 @@ class EEGDataset(Dataset):
         for subdir, dirs, files in os.walk(raw_data_dir):
             for file in files:
                 
-                if "250hz" in file: #First, load in the downsampled EEG data
+                if "EEG_raw_250hz" in file: #First, load in the downsampled EEG data
                     print(os.path.join(subdir, file))
                     data.append(np.load(os.path.join(subdir, file)))
                     print(f'Night {nightsLoaded} data loaded')
@@ -43,18 +43,17 @@ class EEGDataset(Dataset):
                 break
 
         
+        self.data = data
+        self.labels = labels
 
-
-                
-
-
-
-        self.landmarks_frame = pd.read_csv(csv_file)
-        self.root_dir = root_dir
-        self.transform = transform
 
     def __len__(self):
-        return len(self.landmarks_frame)
+        len = 0
+
+        for night in self.data:
+            
+
+        return len
 
     def __getitem__(self, idx):
         if torch.is_tensor(idx):
