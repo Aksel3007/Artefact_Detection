@@ -3,6 +3,7 @@ import torch
 from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms, utils
 import numpy as np
+import math
 
 
 class EEGDataset(Dataset):
@@ -59,7 +60,7 @@ class EEGDataset(Dataset):
         
         samples = self.data.shape[0]*self.data.shape[1]
 
-        return samples/self.sectionLength
+        return int(samples/self.sectionLength)
 
     def __getitem__(self, idx):
         if torch.is_tensor(idx):
@@ -67,21 +68,23 @@ class EEGDataset(Dataset):
 
         
 
-        for sample in idx:
-            index = sample * self.sectionLength
-            channel = np.floor(index/self.data.shape[1])
-            start = index % self.data.shape[1]
-            data = self.data[channel, start : start + self.sectionLength]
-            artefacts = self.labels[channel, start : start + self.sectionLength]
         
-            sample = {'data': data, 'artefacts': artefacts}
+        index = idx * self.sectionLength
+        channel = math.floor(index/self.data.shape[1])
+        start = index % self.data.shape[1]
+        data = self.data[channel, start : start + self.sectionLength]
+        artefacts = self.labels[channel, start : start + self.sectionLength]
+        
+        #sample = {'data': data, 'artefacts': artefacts}
 
-        return sample
+        return data, artefacts
 
 
 
-raw_data_dir = '//uni.au.dk/dfs/Tech_EarEEG/Students/RD2022_Artefact_AkselStark/data/1A/study_1A_mat_simple'
+# Test if the dataset works
 
-ds1 = EEGDataset(raw_data_dir,2, 250)
+# raw_data_dir = '//uni.au.dk/dfs/Tech_EarEEG/Students/RD2022_Artefact_AkselStark/data/1A/study_1A_mat_simple'
 
-print('debug')
+# ds1 = EEGDataset(raw_data_dir,2, 250)
+
+# print('debug')
