@@ -65,9 +65,6 @@ class EEGDataset(Dataset):
     def __getitem__(self, idx):
         if torch.is_tensor(idx):
             idx = idx.tolist()
-
-        
-
         
         index = idx * self.sectionLength
         channel = math.floor(index/self.data.shape[1])
@@ -75,9 +72,14 @@ class EEGDataset(Dataset):
         data = self.data[channel, start : start + self.sectionLength]
         artefacts = self.labels[channel, start : start + self.sectionLength]
         
-        #sample = {'data': data, 'artefacts': artefacts}
+        containsArtefact = 0
+        for i in artefacts:
+            if i:
+                containsArtefact = 1
+                break
+        
 
-        return data, artefacts
+        return data, float(containsArtefact)
 
 
 
