@@ -60,7 +60,7 @@ class EEGDataset(Dataset):
         
         samples = self.data.shape[0]*self.data.shape[1]
 
-        return int(samples/self.sectionLength)
+        return int(samples/self.sectionLength)-1 # Drop the last sample avoid incomplete series. TODO: Zeropadding or some better solution
 
     def __getitem__(self, idx):
         if torch.is_tensor(idx):
