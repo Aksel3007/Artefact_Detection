@@ -70,9 +70,15 @@ class EEGDataset(Dataset):
         channel = math.floor(index/self.data.shape[1])
         start = index % self.data.shape[1]
         data_seg = self.data[channel, start : start + self.sectionLength]
-        data_seg = np.fft.fft(data_seg)
+        data_seg = np.fft.fft(data_seg) #TODO: abs Todo: FFTW er hurtigere
         artefacts = self.labels[channel, start : start + self.sectionLength]
         
+        # TODO: Window: 3 sekunder spektrogram og originale samples, træn som image classification
+
+        # TODO: Alternativt: 1dconv kernel 100 -> 2dconv
+        
+
+
         containsArtefact = 0
         for i in artefacts:
             if i:
