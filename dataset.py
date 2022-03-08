@@ -69,7 +69,8 @@ class EEGDataset(Dataset):
         index = idx * self.sectionLength
         channel = math.floor(index/self.data.shape[1])
         start = index % self.data.shape[1]
-        data = self.data[channel, start : start + self.sectionLength]
+        data_seg = self.data[channel, start : start + self.sectionLength]
+        data_seg = np.fft.fft(data_seg)
         artefacts = self.labels[channel, start : start + self.sectionLength]
         
         containsArtefact = 0
@@ -79,7 +80,7 @@ class EEGDataset(Dataset):
                 break
         
 
-        return data, float(containsArtefact)
+        return data_seg, float(containsArtefact)
 
 
 
