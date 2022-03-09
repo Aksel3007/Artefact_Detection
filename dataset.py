@@ -76,7 +76,7 @@ class EEGDataset(Dataset):
             start = index % self.data.shape[1]
             data_seg = self.data[channel, start : start + self.sectionLength]
             data_seg = np.fft.fft(data_seg) #TODO: abs Todo: FFTW er hurtigere
-            data_seg = np.absolute(data_seg, dtype='float32')
+            data_seg = np.float32(np.absolute(data_seg))
 
             artefacts = self.labels[channel, start : start + self.sectionLength]
             
@@ -99,7 +99,7 @@ class EEGDataset(Dataset):
 
             data_seg = self.data[channelIndex, start : start + self.sectionLength]
             data_seg = np.fft.fft(data_seg) #TODO: abs Todo: FFTW er hurtigere
-            data_seg = np.absolute(data_seg, dtype='float32')
+            data_seg = np.float32(np.absolute(data_seg))
 
             return data_seg, float(1) 
 
@@ -121,7 +121,7 @@ class EEGDataset(Dataset):
 
 # raw_data_dir = '//uni.au.dk/dfs/Tech_EarEEG/Students/RD2022_Artefact_AkselStark/data/1A/study_1A_mat_simple'
 
-# ds1 = EEGDataset(raw_data_dir,2, 250)
+# ds1 = EEGDataset(raw_data_dir,1, 250)
 
 # print('debug')
 
