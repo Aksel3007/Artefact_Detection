@@ -1,7 +1,7 @@
 import os
 import torch
 from torch.utils.data import Dataset, DataLoader
-from torchvision import transforms, utils
+#from torchvision import transforms, utils
 import numpy as np
 import math
 import random
@@ -22,7 +22,7 @@ class EEGDataset(Dataset):
         labelsLoaded = 0
         
         #Run through all the cleaned EEG files
-        for subdir, dirs, files in os.walk(root_dir):
+        for subdir, dirs, files in sorted(os.walk(root_dir)):
             for file in files:
                 
                 if "EEG_raw_250hz" in file: #First, load in the downsampled EEG data
@@ -119,9 +119,11 @@ class EEGDataset(Dataset):
 
 # # Test if the dataset works
 
-# raw_data_dir = '//uni.au.dk/dfs/Tech_EarEEG/Students/RD2022_Artefact_AkselStark/data/1A/study_1A_mat_simple'
+#raw_data_dir = '//uni.au.dk/dfs/Tech_EarEEG/Students/RD2022_Artefact_AkselStark/data/1A/study_1A_mat_simple'
+# raw_data_dir = '../data'
 
 # ds1 = EEGDataset(raw_data_dir,1, 250)
 
 # print('debug')
+
 
