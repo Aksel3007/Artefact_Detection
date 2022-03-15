@@ -9,7 +9,7 @@ import random
 class EEGDataset(Dataset):
     """EEG dataset"""
 
-    def __init__(self, root_dir, numNights, sectionLength, transform=None):
+    def __init__(self, root_dir, numNights, sectionLength, transform=None, skips = 0):
         """
         Args:
             root_dir (string): Directory with EEG data
@@ -19,34 +19,43 @@ class EEGDataset(Dataset):
 
         #Load in the number of nights
         nightsLoaded = 0
+        nightsSkipped = 0
         labelsLoaded = 0
+        labelsSkipped = 0
+        currentNight = 0
         
         #Run through all the cleaned EEG files
         for subdir, dirs, files in sorted(os.walk(root_dir)):
+            #print(os.path.join(subdir))
             for file in files:
+                                
+                if 'EEG_raw_250hz' in file: #First, load in the downsampled EEG data
+                    print(os.path.join(subdir, file))
+                    if nightsSkipped == skips:
+                        if nightsLoaded == 0: # If first night, save array in data, otherwise, append it to data
+                            data = np.load(os.path.join(subdir, file))
+                        else:
+                            data = np.hstack((data,np.load(os.path.join(subdir, file))))
+
+                        print(f'Night {nightsLoaded} data loaded')
+                        nightsLoaded += 1
+                    else:
+                        nightsSkipped +=1
+
+                elif 'artefact_annotation' in file:    #Load in the annotation
+                    print(os.path.join(subdir, file))
+                    if labelsSkipped == skips:
+                        if labelsLoaded == 0:
+                            labels = np.load(os.path.join(subdir, file))
+                        else:
+                            np.hstack((labels,np.load(os.path.join(subdir, file))))
+
+                        print(f'Lables for night {labelsLoaded} loaded')
+                        labelsLoaded += 1
+                    else: 
+                        labelsSkipped +=1
                 
-                if "EEG_raw_250hz" in file: #First, load in the downsampled EEG data
-                    print(os.path.join(subdir, file))
-
-                    if nightsLoaded == 0: # If first night, save array in data, otherwise, append it to data
-                        data = np.load(os.path.join(subdir, file))
-                    else:
-                        data = np.hstack((data,np.load(os.path.join(subdir, file))))
-
-                    print(f'Night {nightsLoaded} data loaded')
-                    nightsLoaded += 1
-
-                if 'artefact_annotation' in file:    #Load in the annotation
-                    print(os.path.join(subdir, file))
-                    if labelsLoaded == 0:
-                        labels = np.load(os.path.join(subdir, file))
-                    else:
-                        np.hstack((labels,np.load(os.path.join(subdir, file))))
-
-                    print(f'Lables for night {labelsLoaded} loaded')
-                    labelsLoaded += 1
-                    
-
+            
             if nightsLoaded == numNights and labelsLoaded == numNights : # When the correct number of nights has been loaded
                 break
 
@@ -120,10 +129,10 @@ class EEGDataset(Dataset):
 # # Test if the dataset works
 
 #raw_data_dir = '//uni.au.dk/dfs/Tech_EarEEG/Students/RD2022_Artefact_AkselStark/data/1A/study_1A_mat_simple'
-# raw_data_dir = '../data'
+#raw_data_dir = '../data'
 
-# ds1 = EEGDataset(raw_data_dir,1, 250)
+#ds1 = EEGDataset(raw_data_dir,1, 250,startNight = 4)
 
-# print('debug')
+#print('debug')
 
 
