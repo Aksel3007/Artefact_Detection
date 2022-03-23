@@ -94,7 +94,7 @@ class EEGDataset(Dataset):
                 if i:
                     containsArtefact = 1
                     break
-            return data_seg, float(containsArtefact) 
+            return data_seg, float(containsArtefact)#, channel, start 
 
         else: # every other sample is a randomly selected artefact segment
             randIndex = int(random.random()*self.artefactIndecies[0].size)
@@ -110,7 +110,7 @@ class EEGDataset(Dataset):
             data_seg = np.fft.fft(data_seg) #TODO: abs Todo: FFTW er hurtigere
             data_seg = np.float32(np.absolute(data_seg))
 
-            return data_seg, float(1) 
+            return data_seg, float(1)#, channelIndex, start
 
 
 
