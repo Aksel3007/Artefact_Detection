@@ -84,8 +84,9 @@ class EEGDataset(Dataset):
             channel = math.floor(index/self.data.shape[1])
             start = index % self.data.shape[1]
             data_seg = self.data[channel, start : start + self.sectionLength]
-            data_seg = np.fft.fft(data_seg) #TODO: abs Todo: FFTW er hurtigere
-            data_seg = np.float32(np.absolute(data_seg))
+            data_seg = (data_seg - np.mean(data_seg))/max([np.std(data_seg),0.00001]) #Normalize to unit variance and 0 mean
+            #data_seg = np.fft.fft(data_seg) #TODO: abs Todo: FFTW er hurtigere
+            #data_seg = np.float32(np.absolute(data_seg))
 
             artefacts = self.labels[channel, start : start + self.sectionLength]
             
@@ -107,8 +108,9 @@ class EEGDataset(Dataset):
             if start > self.labels.shape[1]: start = self.labels.shape[1] - self.sectionLength
 
             data_seg = self.data[channelIndex, start : start + self.sectionLength]
-            data_seg = np.fft.fft(data_seg) #TODO: abs Todo: FFTW er hurtigere
-            data_seg = np.float32(np.absolute(data_seg))
+            data_seg = (data_seg - np.mean(data_seg))/max([np.std(data_seg),0.00001]) #Normalize to unit variance and 0 mean
+            #data_seg = np.fft.fft(data_seg) #TODO: abs Todo: FFTW er hurtigere
+            #data_seg = np.float32(np.absolute(data_seg))
 
             return data_seg, float(1)#, channelIndex, start
 
@@ -127,12 +129,21 @@ class EEGDataset(Dataset):
 
 
 # # Test if the dataset works
+if True:
+    import matplotlib.pyplot as plt
+    
+    raw_data_dir = '../data'
 
-#raw_data_dir = '//uni.au.dk/dfs/Tech_EarEEG/Students/RD2022_Artefact_AkselStark/data/1A/study_1A_mat_simple'
-#raw_data_dir = '../data'
+    ds1 = EEGDataset(raw_data_dir,1, 250,skips = 0)
 
-#ds1 = EEGDataset(raw_data_dir,1, 250,startNight = 4)
+    for i in range(10000):
+        a = ds1[random.randint(0,ds1.__len__())]
+        #plt.plot(range(250),a[0])
+        #plt.title("Data segment") 
+        #plt.show()
+    
 
-#print('debug')
+
+    print('debug')
 
 
