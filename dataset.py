@@ -84,9 +84,20 @@ class EEGDataset(Dataset):
             channel = math.floor(index/self.data.shape[1])
             start = index % self.data.shape[1]
             data_seg = self.data[channel, start : start + self.sectionLength]
-            data_seg = (data_seg - np.mean(data_seg))/max([np.std(data_seg),0.00001]) #Normalize to unit variance and 0 mean
-            #data_seg = np.fft.fft(data_seg) #TODO: abs Todo: FFTW er hurtigere
-            #data_seg = np.float32(np.absolute(data_seg))
+            
+            std = max([np.std(data_seg),0.00001]) # Standard deviation for normalization and feature
+            mean = np.mean(data_seg) # Mean for normalization and feature
+
+            #data_seg = (data_seg - mean) #Normalize to unit variance and 0 mean
+            
+            # Fourier transform
+            data_seg = np.fft.fft(data_seg) #TODO: abs Todo: FFTW er hurtigere
+            
+            # Normalize and append mean and stdandard deviation as features
+            data_seg = np.append(data_seg, [mean/150000, std/3000])
+            
+            #Convert to float32 
+            data_seg = np.float32(np.absolute(data_seg))
 
             artefacts = self.labels[channel, start : start + self.sectionLength]
             
@@ -106,12 +117,23 @@ class EEGDataset(Dataset):
             # Avoid reading out of range
             if start < 0: start = 0 
             if start > self.labels.shape[1]: start = self.labels.shape[1] - self.sectionLength
-
+            
             data_seg = self.data[channelIndex, start : start + self.sectionLength]
-            data_seg = (data_seg - np.mean(data_seg))/max([np.std(data_seg),0.00001]) #Normalize to unit variance and 0 mean
-            #data_seg = np.fft.fft(data_seg) #TODO: abs Todo: FFTW er hurtigere
-            #data_seg = np.float32(np.absolute(data_seg))
+            
+            std = max([np.std(data_seg),0.00001]) # Standard deviation for normalization and feature
+            mean = np.mean(data_seg) # Mean for normalization and feature
 
+            #data_seg = (data_seg - mean) #Normalize to unit variance and 0 mean
+            
+            # Fourier transform
+            data_seg = np.fft.fft(data_seg) #TODO: abs Todo: FFTW er hurtigere
+            
+            # Normalize and append mean and stdandard deviation as features
+            data_seg = np.append(data_seg, [mean/150000, std/3000])
+            
+            #Convert to float32 
+            data_seg = np.float32(np.absolute(data_seg))
+            
             return data_seg, float(1)#, channelIndex, start
 
 
@@ -127,9 +149,9 @@ class EEGDataset(Dataset):
         # TODO: Alternativt: 1dconv kernel 100 -> 2dconv
         
 
-
+print("Classification dataset version: mar-30-1")
 # # Test if the dataset works
-if True:
+if False:
     import matplotlib.pyplot as plt
     
     raw_data_dir = '../data'
@@ -138,6 +160,7 @@ if True:
 
     for i in range(10000):
         a = ds1[random.randint(0,ds1.__len__())]
+        print(a)
         #plt.plot(range(250),a[0])
         #plt.title("Data segment") 
         #plt.show()
