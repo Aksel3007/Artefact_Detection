@@ -9,7 +9,7 @@ import random
 class EEGDataset(Dataset):
     """EEG dataset"""
 
-    def __init__(self, root_dir, numNights, sectionLength, transform=None, skips = 0):
+    def __init__(self, root_dir, numNights, sectionLength, transform=None, skips = 0, filtered = False):
         """
         Args:
             root_dir (string): Directory with EEG data
@@ -24,12 +24,19 @@ class EEGDataset(Dataset):
         labelsSkipped = 0
         currentNight = 0
         
+        
+        if filtered:
+            filename = "EEG_raw_250hz_unfiltered.npy"
+        else:
+            filename = "EEG_raw_250hz.npy"
+                
+        
         #Run through all the cleaned EEG files
         for subdir, dirs, files in sorted(os.walk(root_dir)):
             #print(os.path.join(subdir))
             for file in files:
                                 
-                if 'EEG_raw_250hz' in file: #First, load in the downsampled EEG data
+                if 'EEG_raw_250hz_unfiltered' in file: #First, load in the downsampled EEG data
                     print(os.path.join(subdir, file))
                     if nightsSkipped == skips:
                         if nightsLoaded == 0: # If first night, save array in data, otherwise, append it to data
