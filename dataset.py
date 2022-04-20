@@ -26,9 +26,9 @@ class EEGDataset(Dataset):
         
         
         if filtered:
-            filename = "EEG_raw_250hz_unfiltered.npy"
-        else:
             filename = "EEG_raw_250hz.npy"
+        else:
+            filename = "EEG_raw_250hz_unfiltered.npy"
                 
         
         #Run through all the cleaned EEG files
@@ -36,7 +36,7 @@ class EEGDataset(Dataset):
             #print(os.path.join(subdir))
             for file in files:
                                 
-                if 'EEG_raw_250hz_unfiltered' in file: #First, load in the downsampled EEG data
+                if filename in file: #First, load in the downsampled EEG data
                     print(os.path.join(subdir, file))
                     if nightsSkipped == skips:
                         if nightsLoaded == 0: # If first night, save array in data, otherwise, append it to data
@@ -101,12 +101,15 @@ class EEGDataset(Dataset):
             data_seg = np.fft.fft(data_seg) #TODO: abs Todo: FFTW er hurtigere
             
             # Normalize and append mean and stdandard deviation as features
-            data_seg = np.append(data_seg, [mean/150000, std/3000])
+            #data_seg = np.append(data_seg, [mean/150000, std/3000])
             
             #Convert to float32 
             data_seg = np.float32(np.absolute(data_seg))
 
             artefacts = self.labels[channel, start : start + self.sectionLength]
+            
+            #data_seg[0] = 0 # Remove DC component
+            #data_seg[self.sectionLength-1] = 0 # Remove DC component
             
             containsArtefact = 0
             for i in artefacts:
@@ -117,6 +120,7 @@ class EEGDataset(Dataset):
 
         else: # every other sample is a randomly selected artefact segment
             randIndex = int(random.random()*self.artefactIndecies[0].size)
+            #randIndex = idx # Temporary fix to make dataset deterministic
             channelIndex = self.artefactIndecies[0][randIndex]
             timeIndex = self.artefactIndecies[1][randIndex]
             start = timeIndex - int(self.sectionLength/2)
@@ -136,10 +140,13 @@ class EEGDataset(Dataset):
             data_seg = np.fft.fft(data_seg) #TODO: abs Todo: FFTW er hurtigere
             
             # Normalize and append mean and stdandard deviation as features
-            data_seg = np.append(data_seg, [mean/150000, std/3000])
+            #data_seg = np.append(data_seg, [mean/150000, std/3000])
             
             #Convert to float32 
             data_seg = np.float32(np.absolute(data_seg))
+            
+            #data_seg[0] = 0 # Remove DC component
+            #data_seg[self.sectionLength-1] = 0 # Remove DC component
             
             return data_seg, float(1)#, channelIndex, start
 
@@ -156,8 +163,8 @@ class EEGDataset(Dataset):
         # TODO: Alternativt: 1dconv kernel 100 -> 2dconv
         
 
-print("Classification dataset version: mar-30-1")
-# # Test if the dataset works
+print("Classification dataset version: apr-16-22-v1")
+# # Test if the dataset works, by plotting a random sample
 if False:
     import matplotlib.pyplot as plt
     
@@ -173,7 +180,23 @@ if False:
         #plt.show()
     
 
+# # Test if filtering works, by plotting filtered and unfiltered data
+if False:
+    import matplotlib.pyplot as plt
+    
+    raw_data_dir = '../data'
 
-    print('debug')
+    filtered_data = EEGDataset(raw_data_dir,1, 250,skips = 0)
+    unfiltered_data = EEGDataset(raw_data_dir,1, 250,skips = 0,filtered = False)
+
+    for i in range(10000):
+        index = random.randint(0,filtered_data.__len__())
+        filt = filtered_data[index]
+        unfilt = unfiltered_data[index]
+        plt.plot(range(252),filt[0])
+        plt.title("Data segment") 
+        plt.show()
+
+
 
 
