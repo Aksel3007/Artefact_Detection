@@ -5,6 +5,8 @@ from torch.utils.data import Dataset, DataLoader
 import numpy as np
 import math
 import random
+import tracemalloc
+import torch.utils.data as data
 
 class EEGDataset(Dataset):
     """EEG dataset"""
@@ -17,13 +19,15 @@ class EEGDataset(Dataset):
             sectionLength: Amount of samples in a segment
         """
 
+        tracemalloc.start() # Enable memory profiling
+        
         #Load in the number of nights
         nightsLoaded = 0
         nightsSkipped = 0
         labelsLoaded = 0
         labelsSkipped = 0
         currentNight = 0
-        
+        shape_list = []
         
         if filtered:
             filename = "EEG_raw_250hz.npy"
@@ -37,27 +41,29 @@ class EEGDataset(Dataset):
             for file in files:
                                 
                 if filename in file: #First, load in the downsampled EEG data
-                    print(os.path.join(subdir, file))
-                    if nightsSkipped == skips:
-                        if nightsLoaded == 0: # If first night, save array in data, otherwise, append it to data
-                            data = np.load(os.path.join(subdir, file))
-                        else:
-                            data = np.hstack((data,np.load(os.path.join(subdir, file))))
-
-                        print(f'Night {nightsLoaded} data loaded')
+                    #print(os.path.join(subdir, file))
+                    if nightsSkipped == skips:                        
+                        data = (np.load(os.path.join(subdir, file), mmap_mode='c'))
+                        
+                        print(os.path.join(subdir, file))
+                        
+                        #Print memory usage
+                        print(f'Memory usage: {tracemalloc.get_traced_memory()[0]/1000000} MB\n')
+                        
                         nightsLoaded += 1
                     else:
                         nightsSkipped +=1
 
                 elif 'artefact_annotation' in file:    #Load in the annotation
-                    print(os.path.join(subdir, file))
+                    #print(os.path.join(subdir, file))
                     if labelsSkipped == skips:
+                        #shape = tuple(np.load(os.path.join(subdir, "data_shape.npy")))
                         if labelsLoaded == 0:
-                            labels = np.load(os.path.join(subdir, file))
+                            labels = np.load(os.path.join(subdir, file), mmap_mode='c')
                         else:
-                            np.hstack((labels,np.load(os.path.join(subdir, file))))
+                            labels = np.hstack((labels,np.load(os.path.join(subdir, file), mmap_mode='c')))
 
-                        print(f'Lables for night {labelsLoaded} loaded')
+                        print(os.path.join(subdir, file))
                         labelsLoaded += 1
                     else: 
                         labelsSkipped +=1
@@ -79,7 +85,9 @@ class EEGDataset(Dataset):
         
         samples = self.data.shape[0]*self.data.shape[1]
 
-        return int(samples/self.sectionLength)-5 # Drop the last samples avoid incomplete series. TODO: Zeropadding or some better solution
+        segments = int(samples/self.sectionLength)
+        
+        return segments - (segments % 128)
 
     def __getitem__(self, idx):
         if torch.is_tensor(idx):
@@ -152,8 +160,15 @@ class EEGDataset(Dataset):
 
 
 
-            
 
+# Function to load a dataset concatenating N nights
+def load_dataset(nights, sectionLenght, root_dir, filtered = False):
+    datasets = []
+    for i in nights:
+        datasets.append(EEGDataset(root_dir,1, sectionLenght ,skips = i, filtered = filtered))
+    
+    # Return concatenated datasets
+    return data.ConcatDataset(datasets)
 
 
             
@@ -163,23 +178,23 @@ class EEGDataset(Dataset):
         # TODO: Alternativt: 1dconv kernel 100 -> 2dconv
         
 
-print("Classification dataset version: apr-16-22-v1")
+print("Classification dataset version: apr-22-22-v1")
 # # Test if the dataset works, by plotting a random sample
 if False:
     import matplotlib.pyplot as plt
     
     raw_data_dir = '../data'
 
-    ds1 = EEGDataset(raw_data_dir,1, 250,skips = 0)
+    ds1 = EEGDataset(raw_data_dir,30, 750,skips = 0)
 
     for i in range(10000):
         a = ds1[random.randint(0,ds1.__len__())]
-        print(a)
+        #print(a)
         #plt.plot(range(250),a[0])
         #plt.title("Data segment") 
         #plt.show()
+    print("Dataset loaded")
     
-
 # # Test if filtering works, by plotting filtered and unfiltered data
 if False:
     import matplotlib.pyplot as plt
@@ -197,6 +212,14 @@ if False:
         plt.title("Data segment") 
         plt.show()
 
+# Test concatenation of datasets
+if False:
+    raw_data_dir = '../data'
+
+    ds1 = load_dataset(range(30), 250, raw_data_dir)
+    
+    print("Dataset concatenated")
+    
 
 
 
