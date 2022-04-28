@@ -73,7 +73,7 @@ class EEGDataset(Dataset):
                 break
 
         self.artefactIndecies = np.where(labels==1) #Needed to be able to grab an artefact sample
-        self.goodIndecies = np.where(labels==0) #Needed to be able to grab a good sample
+        #self.goodIndecies = np.where(labels==0) #Needed to be able to grab a good sample. This takes too much memory
         self.data = data
         self.labels = labels
         self.sectionLength = sectionLength
@@ -96,41 +96,45 @@ class EEGDataset(Dataset):
         p = random.random()
 
         if idx % 2: # Every other sample is a segment from the dataset
-            index = idx * self.sectionLength
-            channel = math.floor(index/self.data.shape[1])
-            start = index % self.data.shape[1]
-            while True:
-                data_seg = self.data[channel, start : start + self.sectionLength]
-                if data_seg.shape[0] == self.sectionLength:
-                    break
+            while True:    
+                index = idx * self.sectionLength
+                channel = math.floor(index/self.data.shape[1]) % 24
+                start = index % self.data.shape[1]
+                # while True:
+                #     data_seg = self.data[channel, start : start + self.sectionLength]
+                #     if data_seg.shape[0] == self.sectionLength:
+                #         break
+                #     else:
+                #         print("Error: Segment length is not equal to section length")
+                
+                #std = max([np.std(data_seg),0.00001]) # Standard deviation for normalization and feature
+                #mean = np.mean(data_seg) # Mean for normalization and feature
+
+                #data_seg = (data_seg - mean) #Normalize to unit variance and 0 mean
+                
+                # Fourier transform
+                #data_seg = np.fft.fft(data_seg) #TODO: abs Todo: FFTW er hurtigere
+                
+                # Normalize and append mean and stdandard deviation as features
+                #data_seg = np.append(data_seg, [mean/150000, std/3000])
+                
+                #Convert to float32 
+                #data_seg = np.float32(np.absolute(data_seg))
+
+                artefacts = self.labels[channel, start : start + self.sectionLength]
+                
+                containsArtefact = 0
+                for i in artefacts:
+                    if i:
+                        containsArtefact = 1
+                        break
+                if containsArtefact:
+                    idx += self.sectionLength
                 else:
-                    print("Error: Segment length is not equal to section length")
-            
-            #std = max([np.std(data_seg),0.00001]) # Standard deviation for normalization and feature
-            #mean = np.mean(data_seg) # Mean for normalization and feature
-
-            #data_seg = (data_seg - mean) #Normalize to unit variance and 0 mean
-            
-            # Fourier transform
-            data_seg = np.fft.fft(data_seg) #TODO: abs Todo: FFTW er hurtigere
-            
-            # Normalize and append mean and stdandard deviation as features
-            #data_seg = np.append(data_seg, [mean/150000, std/3000])
-            
-            #Convert to float32 
-            data_seg = np.float32(np.absolute(data_seg))
-
-            artefacts = self.labels[channel, start : start + self.sectionLength]
-            
-            #data_seg[0] = 0 # Remove DC component
-            #data_seg[self.sectionLength-1] = 0 # Remove DC component
-            
-            containsArtefact = 0
-            for i in artefacts:
-                if i:
-                    containsArtefact = 1
-                    break
-            return data_seg, float(containsArtefact)#, channel, start 
+                    data_seg = self.data[channel, start : start + self.sectionLength]
+                    data_seg = np.fft.fft(data_seg)
+                    data_seg = np.float32(np.absolute(data_seg))
+                    return data_seg, float(containsArtefact)#, channel, start 
 
         else: # every other sample is a randomly selected artefact segment
             randIndex = int(random.random()*self.artefactIndecies[0].size)
@@ -196,7 +200,7 @@ def load_dataset(nights, sectionLenght, root_dir, filtered = False):
         # TODO: Alternativt: 1dconv kernel 100 -> 2dconv
         
 
-print("Classification dataset version: apr-25-22-v3")
+print("Classification dataset version: apr-27-22-v8")
 # # Test if the dataset works, by plotting a random sample
 if False:
     import matplotlib.pyplot as plt
@@ -251,7 +255,12 @@ if False:
         if i % 1000 == 0:
             print(i)
             
+if False:
+    raw_data_dir = '../data'
 
-
-
-
+    ds1 = load_dataset(range(6), 750, raw_data_dir)
+    print("Dataset loaded")
+    while True:
+        for i in range(1000):
+            a = ds1[random.randint(0,ds1.__len__())]
+            
