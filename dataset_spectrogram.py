@@ -55,15 +55,26 @@ class EEGDataset(Dataset):
         if torch.is_tensor(idx):
             idx = idx.tolist()
         
-        if idx % 2: 
+        if idx % 2: #If the index is odd, return the good data
             return self.good_data[idx//2], float(0)
-        else:
+        
+        else: # If the index is even, return the bad data
             return self.bad_data[idx//2], float(1)
         
+def load_dataset(nights,root_dir):
+    datasets = []
+    for i in nights:
+        datasets.append(EEGDataset(root_dir,skips = i))
+    
+    # Return concatenated datasets
+    return datasets
+
+
+
 
 # Test the dataset
 
-if True:
+if False:
     ds1 = EEGDataset('../data', skips = 0)
     print(len(ds1))
     print(ds1[0])
