@@ -27,6 +27,7 @@ class EEGDataset(Dataset):
         for subdir, dirs, files in sorted(os.walk(root_dir)):
             for file in files:
                 
+                
                 if "good" in file and good_skips == skips:
                     good_data = np.load(os.path.join(subdir, file))
                     print(os.path.join(subdir, file))
@@ -45,11 +46,17 @@ class EEGDataset(Dataset):
         self.good_data = good_data
         self.bad_data = bad_data            
         print(f'Memory usage: {tracemalloc.get_traced_memory()[0]/1000000} MB\n')
+        
+        print("Lengths:\n")
+        print(f"Good data length: {self.good_data.shape[0]}")
+        print(f"Bad data length: {self.bad_data.shape[0]}")
+        print(f"Caluculated length: {self.__len__()}")
     
     
     def __len__(self):
-        return 2 * min(self.good_data.shape[0], self.bad_data.shape[0])
-    
+        
+        return (2 * min(self.good_data.shape[0], self.bad_data.shape[0])) - 1
+     
     
     def __getitem__(self, idx):
         if torch.is_tensor(idx):
@@ -67,15 +74,21 @@ def load_dataset(nights,root_dir):
         datasets.append(EEGDataset(root_dir,skips = i))
     
     # Return concatenated datasets
-    return datasets
+    return data.ConcatDataset(datasets)
 
 
+print("Spectrogram dataset version 7")
 
 
 # Test the dataset
 
 if False:
-    ds1 = EEGDataset('../data', skips = 0)
+    ds1 = EEGDataset('../data', skips = 10)
     print(len(ds1))
     print(ds1[0])
     print("\n")
+    
+if True:
+    ds1 = load_dataset([11],'../data')
+    print("\n")
+    
