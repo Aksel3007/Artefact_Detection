@@ -12,6 +12,7 @@ def concat_list(s, l):
 run_names = concat_list('AR-', list_of_ints(1, 100))
 
 
+
 # Go throug all runs and init, sleep then stop
 def run_all(run_names):
     for i in run_names:
@@ -22,6 +23,17 @@ def run_all(run_names):
         time.sleep(4)
         run.stop()
         
+run = neptune.init(
+    project="NTLAB/artifactDetect-ear", 
+    run = "AR-32",
+    api_token="eyJhcGlfYWRkcmVzcyI6Imh0dHBzOi8vYXBwLm5lcHR1bmUuYWkiLCJhcGlfdXJsIjoiaHR0cHM6Ly9hcHAubmVwdHVuZS5haSIsImFwaV9rZXkiOiIxYTA4NzcxMy1lYmQ2LTQ3NTctYjRhNC02Mzk1NjdjMWM0NmYifQ==", # your credentials
+)
+# Upload the local neptune data
+
+run["testing/update_test"].log(1000)
+run.sync(wait = True)
+run.stop()
+
         
         
-run_all(run_names)
+#run_all(run_names)

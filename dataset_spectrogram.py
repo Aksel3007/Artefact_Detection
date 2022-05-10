@@ -12,7 +12,7 @@ import torch.utils.data as data
 class EEGDataset(Dataset):
     """EEG dataset"""
 
-    def __init__(self, root_dir, transform=None, skips = 0):
+    def __init__(self, root_dir, transform=None, skips = 0, normalized = True):
         """
         Args:
             root_dir (string): Directory with EEG data
@@ -24,23 +24,30 @@ class EEGDataset(Dataset):
         bad_skips = 0
         self.segmentLength = 0
         
+        if normalized:
+            good_filename = "good_segments.npy"
+            bad_filename = "bad_segments.npy"
+        else:
+            good_filename = "good_segments_unnormalized.npy"
+            bad_filename = "bad_segments_unnormalized.npy"
+        
         for subdir, dirs, files in sorted(os.walk(root_dir)):
             for file in files:
                 
                 
-                if "good" in file and good_skips == skips:
-                    good_data = np.load(os.path.join(subdir, file))
+                if good_filename in file and good_skips == skips:
+                    good_data = np.load(os.path.join(subdir, file), mmap_mode='c')
                     print(os.path.join(subdir, file))
                     good_skips += 1
-                elif "good" in file:
+                elif good_filename in file:
                     good_skips += 1
                     
                     
-                if "bad" in file and bad_skips == skips:
-                    bad_data = np.load(os.path.join(subdir, file))
+                if bad_filename in file and bad_skips == skips:
+                    bad_data = np.load(os.path.join(subdir, file), mmap_mode='c')
                     print(os.path.join(subdir, file))
                     bad_skips += 1
-                elif "bad" in file:
+                elif bad_filename in file:
                     bad_skips += 1
         
         self.good_data = good_data
@@ -66,18 +73,21 @@ class EEGDataset(Dataset):
             return self.good_data[idx//2], float(0)
         
         else: # If the index is even, return the bad data
-            return self.bad_data[idx//2], float(1)
+            return np.nan_to_num(self.bad_data[idx//2]), float(1)
         
-def load_dataset(nights,root_dir):
+def load_dataset(nights,root_dir, normalized = True):
     datasets = []
     for i in nights:
-        datasets.append(EEGDataset(root_dir,skips = i))
+        try: # Allowed to fail if reading non excisting files
+            datasets.append(EEGDataset(root_dir,skips = i, normalized = normalized))
+        except:
+            print(f"Data for nigth {i} does not exist")
     
     # Return concatenated datasets
     return data.ConcatDataset(datasets)
 
 
-print("Spectrogram dataset version 7")
+print("Spectrogram dataset version 9")
 
 
 # Test the dataset
@@ -88,7 +98,7 @@ if False:
     print(ds1[0])
     print("\n")
     
-if True:
+if False:
     ds1 = load_dataset([11],'../data')
     print("\n")
     

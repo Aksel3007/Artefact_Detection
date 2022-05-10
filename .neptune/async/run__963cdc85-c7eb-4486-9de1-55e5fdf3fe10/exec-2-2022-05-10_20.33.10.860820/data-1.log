@@ -1,0 +1,6 @@
+{"obj": {"type": "LogStrings", "path": ["monitoring", "stderr"], "values": [{"value": "Info (NVML): NVML Shared Library Not Found. GPU usage metrics may not be reported. For more information, see https://docs.neptune.ai/you-should-know/what-can-you-log-and-display#hardware-consumption\n", "step": null, "ts": 1652207590.9390078}]}, "version": 1}
+{"obj": {"type": "LogFloats", "path": ["monitoring", "cpu"], "values": [{"value": 8.0, "step": null, "ts": 1652207590.9401047}]}, "version": 2}
+{"obj": {"type": "LogFloats", "path": ["monitoring", "memory"], "values": [{"value": 3.255413055419922, "step": null, "ts": 1652207590.9401047}]}, "version": 3}
+{"obj": {"type": "LogFloats", "path": ["testing", "update_test"], "values": [{"value": 1000.0, "step": null, "ts": 1652207591.1269696}]}, "version": 4}
+{"obj": {"type": "LogStrings", "path": ["monitoring", "stdout"], "values": [{"value": "", "step": null, "ts": 1652207591.4042008}]}, "version": 5}
+{"obj": {"type": "LogStrings", "path": ["monitoring", "stdout"], "values": [{"value": "Shutting down background jobs, please wait a moment...\n", "step": null, "ts": 1652207591.4044092}]}, "version": 6}
