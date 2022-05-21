@@ -87,7 +87,7 @@ def load_dataset(nights,root_dir, normalized = True):
     return data.ConcatDataset(datasets)
 
 
-print("Spectrogram dataset version 9")
+print("Spectrogram dataset version 20 non log")
 
 
 # Test the dataset

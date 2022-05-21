@@ -70,10 +70,16 @@ class EEGDataset(Dataset):
             idx = idx.tolist()
         
         if idx % 2: #If the index is odd, return the good data
-            return self.good_data[idx//2], float(0)
+            log_data = np.nan_to_num(self.good_data[idx//2])
+            log_data[log_data < 0.00001] = 0.00001
+            #return np.log(log_data), float(0)
+            return log_data, float(0)
         
         else: # If the index is even, return the bad data
-            return np.nan_to_num(self.bad_data[idx//2]), float(1)
+            log_data = np.nan_to_num(self.bad_data[idx//2])
+            log_data[log_data < 0.00001] = 0.00001
+            #return np.log(log_data), float(1)
+            return log_data, float(1)
         
 def load_dataset(nights,root_dir, normalized = True):
     datasets = []
@@ -87,7 +93,7 @@ def load_dataset(nights,root_dir, normalized = True):
     return data.ConcatDataset(datasets)
 
 
-print("Spectrogram dataset version 9")
+print("Spectrogram dataset version 19 log")
 
 
 # Test the dataset
